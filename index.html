@@ -550,6 +550,45 @@
     }
     makeCodePanel(['// Happy birthday','const name = "Đạt";','let wishes = Infinity;','console.log("🎂");'],-3.7,2.2,-2.3);
     makeCodePanel(['if (newAge) {','  smile++;','  dreams++;','} // enjoy!'],3.6,3.0,-2.5);
+
+    // Seated coder at an illuminated laptop. Hands alternately press keys.
+    const chair=box(1.35,.23,1.0,0x204a55,0,.63,-.35,avatar);
+    box(1.25,1.0,.17,0x214a56,0,1.19,-.79,avatar);
+    const leftKnee=box(.34,.8,.40,0x25596a,-.35,.49,.42,avatar);
+    const rightKnee=box(.34,.8,.40,0x25596a,.35,.49,.42,avatar);
+    leftKnee.rotation.x=1.05;rightKnee.rotation.x=1.05;
+    const desk=new THREE.Group();desk.position.set(0,0,1.22);avatar.add(desk);
+    box(2.05,.14,.96,0x3c6975,0,1.2,0,desk);
+    for(const side of [-1,1])box(.12,1.15,.12,0x255666,side*.86,.56,-.22,desk);
+    const laptop=new THREE.Group();desk.add(laptop);
+    box(1.16,.065,.7,0x172d3b,0,1.33,-.04,laptop);
+    const screen=box(1.19,.83,.08,0x1c4555,0,1.77,-.38,laptop);
+    screen.rotation.x=-.19;
+    const display=box(1.04,.7,.015,0x10bcb7,0,1.78,-.328,laptop);
+    display.rotation.x=-.19;
+    const glowScreen=new THREE.PointLight(0x57fff0,1.6,3);glowScreen.position.set(0,1.8,.1);laptop.add(glowScreen);
+    const keys=[];
+    for(let row=0;row<3;row++)for(let col=0;col<9;col++)keys.push(box(.095,.012,.07,0x5cd7d0,-.47+col*.115,1.38,.02+row*.11,laptop));
+    const typistHands=[];
+    for(const side of [-1,1]){
+      const arm=avatar.children.find(m=>m.isMesh&&Math.abs(m.position.x-side*.68)<.03&&Math.abs(m.position.y-1.3)<.05);
+      if(arm){arm.position.set(side*.48,1.15,.46);arm.rotation.x=-1.1;arm.rotation.z=side*.08;}
+      const hand=ball(.15,0xffd7bb,side*.42,1.41,.96,avatar);
+      typistHands.push(hand);
+    }
+    let codePulseUntil=0;
+    function specialInteraction(target){
+      if(target!=='laptop')return false;
+      codePulseUntil=clocks.t+3;setSpeech('Code chạy mượt rồi! Chúc mừng sinh nhật Đạt!',avatar);return true;
+    }
+    laptop.userData.specialAction='laptop';
+    function animateSpecial(){
+      typistHands.forEach((h,i)=>{h.position.y=1.41+Math.sin(clocks.t*19+i*Math.PI)*.045;h.position.z=.96+Math.sin(clocks.t*14+i)*.03;});
+      display.material.emissive.setHex(0x007e75);display.material.emissiveIntensity=clocks.t<codePulseUntil?.85:.35;
+      glowScreen.intensity=clocks.t<codePulseUntil?3:1.6;
+      keys.forEach((key,i)=>{key.position.y=1.38+(Math.sin(clocks.t*18+i*1.3)> .82?-.012:0)});
+    }
+
     const balloons = [];
     for (let i = 0; i < 18; i++) {
       const b = new THREE.Group();
@@ -824,12 +863,15 @@
       if (!hits.length) return null;
       if(hits[0].object===objectTag&&objectTag.visible)return objectTag.userData.targetName;
       let obj = hits[0].object;
+      let probe=obj;
+      while(probe){if(probe.userData?.specialAction)return probe.userData.specialAction;probe=probe.parent;}
       while (obj.parent && !['gift', 'cake', 'avatar', 'letter'].includes(obj.name)) obj = obj.parent;
       return obj.name || null;
     }
 
     function handleInteraction(targetName = null) {
       ensureAudioContext();
+      if (state.phase !== 'intro' && specialInteraction(targetName)) return;
       if (state.phase === 'intro') { openGift(); return; }
       if (state.phase === 'island') { enterPhase('greeting'); return; }
       if (state.phase === 'greeting') { enterPhase('explore'); return; }
@@ -922,6 +964,7 @@
       controls.update();
       island.rotation.y = state.phase === 'explore' ? Math.sin(clocks.t * 0.4) * 0.06 : island.rotation.y * 0.92;
       avatar.position.y = Math.sin(clocks.t * 2.1) * 0.06;
+      animateSpecial();
       codePanels.forEach(({panel,originalY,seed})=>{ panel.position.y=originalY+Math.sin(clocks.t*.75+seed)*.14; });
       balloons.forEach(({ group, baseY, seed }) => { group.position.y = baseY + Math.sin(clocks.t + seed) * 0.15; });
       cakeHover.rotation.z += 0.02;
