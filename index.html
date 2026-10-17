@@ -561,8 +561,8 @@
     box(2.05,.14,.96,0x3c6975,0,1.2,0,desk);
     for(const side of [-1,1])box(.12,1.15,.12,0x255666,side*.86,.56,-.22,desk);
     const laptop=new THREE.Group();desk.add(laptop);
-    // Xoay laptop về đúng hướng, màn hình hướng ra phía người xem.
-    laptop.rotation.y=Math.PI;
+    // Nhân vật vẫn ngồi nguyên hướng; đặt bàn phím quay về phía hai tay, màn hình hướng vào người gõ.
+    laptop.rotation.y=0;
     box(1.16,.065,.7,0x172d3b,0,1.33,-.04,laptop);
     const screen=box(1.19,.83,.08,0x1c4555,0,1.77,-.38,laptop);
     screen.rotation.x=-.19;screen.userData.specialAction='laptop';
