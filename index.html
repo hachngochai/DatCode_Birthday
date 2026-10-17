@@ -561,11 +561,12 @@
     box(2.05,.14,.96,0x3c6975,0,1.2,0,desk);
     for(const side of [-1,1])box(.12,1.15,.12,0x255666,side*.86,.56,-.22,desk);
     const laptop=new THREE.Group();desk.add(laptop);
-    // Nhân vật vẫn ngồi nguyên hướng; đặt bàn phím quay về phía hai tay, màn hình hướng vào người gõ.
+    // Không xoay nhân vật hoặc cả laptop: chỉ sửa chiều bàn phím và hướng mặt màn hình.
     laptop.rotation.y=0;
     box(1.16,.065,.7,0x172d3b,0,1.33,-.04,laptop);
-    const screen=box(1.19,.83,.08,0x1c4555,0,1.77,-.38,laptop);
-    screen.rotation.x=-.19;screen.userData.specialAction='laptop';
+    // Lid is on the FAR edge (+Z) of the keyboard, facing back toward the coder (-Z).
+    const screen=box(1.19,.83,.08,0x1c4555,0,1.77,.35,laptop);
+    screen.rotation.x=.19;screen.userData.specialAction='laptop';
     // Texture động thay cho khối màu cố định: giao diện code / cảnh báo FIX BUG.
     const codeCanvas=document.createElement('canvas');
     codeCanvas.width=640;codeCanvas.height=400;
@@ -593,12 +594,12 @@
     function setLaptopScreen(mode){if(laptopScreenMode===mode)return;laptopScreenMode=mode;drawLaptopScreen(mode);}
     // The monitor face is rendered double-sided so the effect is visible from either 3D view.
     const display=mesh(new THREE.PlaneGeometry(1.04,.7),
-      new THREE.MeshBasicMaterial({map:codeTexture,side:THREE.DoubleSide}),0,1.78,-.326,laptop);
-    display.rotation.x=-.19;display.userData.specialAction='laptop';
+      new THREE.MeshBasicMaterial({map:codeTexture,side:THREE.DoubleSide}),0,1.78,.303,laptop);
+    display.rotation.set(.19,Math.PI,0);display.userData.specialAction='laptop';
     const glowScreen=new THREE.PointLight(0x57fff0,1.6,3);glowScreen.position.set(0,1.8,.1);laptop.add(glowScreen);
     setLaptopScreen('idle');
     const keys=[];
-    for(let row=0;row<3;row++)for(let col=0;col<9;col++)keys.push(box(.095,.012,.07,0x5cd7d0,-.47+col*.115,1.38,.02+row*.11,laptop));
+    for(let row=0;row<3;row++)for(let col=0;col<9;col++)keys.push(box(.095,.012,.07,0x5cd7d0,-.47+col*.115,1.38,-.27+row*.11,laptop));
     const typistHands=[];
     for(const side of [-1,1]){
       const arm=avatar.children.find(m=>m.isMesh&&Math.abs(m.position.x-side*.68)<.03&&Math.abs(m.position.y-1.3)<.05);
