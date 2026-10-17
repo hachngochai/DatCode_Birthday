@@ -561,12 +561,42 @@
     box(2.05,.14,.96,0x3c6975,0,1.2,0,desk);
     for(const side of [-1,1])box(.12,1.15,.12,0x255666,side*.86,.56,-.22,desk);
     const laptop=new THREE.Group();desk.add(laptop);
+    // Xoay laptop về đúng hướng, màn hình hướng ra phía người xem.
+    laptop.rotation.y=Math.PI;
     box(1.16,.065,.7,0x172d3b,0,1.33,-.04,laptop);
     const screen=box(1.19,.83,.08,0x1c4555,0,1.77,-.38,laptop);
-    screen.rotation.x=-.19;
-    const display=box(1.04,.7,.015,0x10bcb7,0,1.78,-.328,laptop);
-    display.rotation.x=-.19;
+    screen.rotation.x=-.19;screen.userData.specialAction='laptop';
+    // Texture động thay cho khối màu cố định: giao diện code / cảnh báo FIX BUG.
+    const codeCanvas=document.createElement('canvas');
+    codeCanvas.width=640;codeCanvas.height=400;
+    const codeCtx=codeCanvas.getContext('2d');
+    const codeTexture=new THREE.CanvasTexture(codeCanvas);
+    codeTexture.colorSpace=THREE.SRGBColorSpace;
+    let laptopScreenMode='';
+    function drawLaptopScreen(mode){
+      const red=mode==='fix';
+      codeCtx.fillStyle=red?'#26070e':'#071e2b';codeCtx.fillRect(0,0,640,400);
+      codeCtx.fillStyle=red?'#ff5263':'#48f6d2';
+      codeCtx.fillRect(0,0,640,44);
+      codeCtx.fillStyle='#071e2b';codeCtx.font='bold 22px monospace';
+      codeCtx.fillText(red?'ERROR CONSOLE':'DATCODE / TERMINAL',28,30);
+      codeCtx.fillStyle=red?'#fff0f0':'#d6fff7';
+      codeCtx.font=red?'bold 82px monospace':'bold 76px monospace';
+      codeCtx.textAlign='center';
+      codeCtx.fillText(red?'FIX BUG':'</>',320,155);
+      codeCtx.font='26px monospace';codeCtx.textAlign='left';
+      (red?['> detecting error...', '> patching...', '> building...', '> status: FIXED ✓']:
+           ['const coder = "Dat";','const birthday = true;','console.log("Happy Birthday");','// keep coding!'])
+        .forEach((line,i)=>codeCtx.fillText(line,26,220+i*42));
+      codeTexture.needsUpdate=true;
+    }
+    function setLaptopScreen(mode){if(laptopScreenMode===mode)return;laptopScreenMode=mode;drawLaptopScreen(mode);}
+    // The monitor face is rendered double-sided so the effect is visible from either 3D view.
+    const display=mesh(new THREE.PlaneGeometry(1.04,.7),
+      new THREE.MeshBasicMaterial({map:codeTexture,side:THREE.DoubleSide}),0,1.78,-.326,laptop);
+    display.rotation.x=-.19;display.userData.specialAction='laptop';
     const glowScreen=new THREE.PointLight(0x57fff0,1.6,3);glowScreen.position.set(0,1.8,.1);laptop.add(glowScreen);
+    setLaptopScreen('idle');
     const keys=[];
     for(let row=0;row<3;row++)for(let col=0;col<9;col++)keys.push(box(.095,.012,.07,0x5cd7d0,-.47+col*.115,1.38,.02+row*.11,laptop));
     const typistHands=[];
@@ -579,14 +609,19 @@
     let codePulseUntil=0;
     function specialInteraction(target){
       if(target!=='laptop')return false;
-      codePulseUntil=clocks.t+3;setSpeech('Code chạy mượt rồi! Chúc mừng sinh nhật Đạt!',avatar);return true;
+      codePulseUntil=clocks.t+3.2;
+      setLaptopScreen('fix');
+      setSpeech('FIX BUG! Sửa lỗi xong rồi, Đạt ơi!',avatar);
+      return true;
     }
     laptop.userData.specialAction='laptop';
     function animateSpecial(){
       typistHands.forEach((h,i)=>{h.position.y=1.41+Math.sin(clocks.t*19+i*Math.PI)*.045;h.position.z=.96+Math.sin(clocks.t*14+i)*.03;});
-      display.material.emissive.setHex(0x007e75);display.material.emissiveIntensity=clocks.t<codePulseUntil?.85:.35;
-      glowScreen.intensity=clocks.t<codePulseUntil?3:1.6;
-      keys.forEach((key,i)=>{key.position.y=1.38+(Math.sin(clocks.t*18+i*1.3)> .82?-.012:0)});
+      keys.forEach((key,i)=>{key.position.y=1.38+(Math.sin(clocks.t*18+i*1.3)>.82?-.012:0)});
+      const fixing=clocks.t<codePulseUntil;
+      setLaptopScreen(fixing?'fix':'idle');
+      glowScreen.color.setHex(fixing?0xff364a:0x57fff0);
+      glowScreen.intensity=fixing?4.2:1.6;
     }
 
     const balloons = [];
